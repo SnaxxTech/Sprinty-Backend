@@ -1,98 +1,315 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Sprinty Backend - Authentication System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A production-ready NestJS authentication system with Prisma, PostgreSQL, and OAuth support.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- ✅ Email/Password Registration & Login
+- ✅ Google OAuth Authentication
+- ✅ JWT-based Authentication
+- ✅ Extensible OAuth Provider System
+- ✅ Clean Architecture with Prisma
+- ✅ HTTP-only Cookie Support
+- ✅ Input Validation
+- ✅ Secure Password Hashing (bcrypt)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **Framework**: NestJS
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Passport.js + JWT
+- **Validation**: class-validator
+- **Password Hashing**: bcrypt
 
-```bash
-$ npm install
+## Project Structure
+
+```
+src/
+├── auth/
+│   ├── dto/
+│   │   ├── register.dto.ts
+│   │   └── login.dto.ts
+│   ├── guards/
+│   │   ├── jwt-auth.guard.ts
+│   │   ├── local-auth.guard.ts
+│   │   └── google-auth.guard.ts
+│   ├── strategies/
+│   │   ├── jwt.strategy.ts
+│   │   ├── local.strategy.ts
+│   │   └── google.strategy.ts
+│   ├── auth.controller.ts
+│   ├── auth.service.ts
+│   └── auth.module.ts
+├── users/
+│   ├── users.service.ts
+│   └── users.module.ts
+├── social-accounts/
+│   ├── social-accounts.service.ts
+│   └── social-accounts.module.ts
+├── prisma/
+│   ├── prisma.service.ts
+│   └── prisma.module.ts
+└── app.module.ts
+
+prisma/
+└── schema.prisma
 ```
 
-## Compile and run the project
+## Environment Variables
+
+Create a `.env` file in the root directory:
 
 ```bash
-# development
-$ npm run start
+# Database Configuration
+DATABASE_URL="postgresql://username:password@localhost:5432/sprinty_db?schema=public"
 
-# watch mode
-$ npm run start:dev
+# JWT Configuration
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+JWT_EXPIRES_IN="86400"
 
-# production mode
-$ npm run start:prod
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_CALLBACK_URL="http://localhost:3001/auth/google/callback"
+
+# Frontend URL (for OAuth redirects)
+FRONTEND_URL="http://localhost:3000"
+
+# Server Configuration
+PORT=3001
+NODE_ENV="development"
 ```
 
-## Run tests
+## Setup Instructions
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Setup PostgreSQL Database**
+   ```bash
+   # Create database
+   createdb sprinty_db
+   ```
+
+3. **Configure Environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual values
+   ```
+
+4. **Setup Google OAuth** (Optional)
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing
+   - Enable Google+ API
+   - Create OAuth 2.0 credentials
+   - Add authorized redirect URIs: `http://localhost:3001/auth/google/callback`
+   - Copy Client ID and Client Secret to `.env`
+
+5. **Run Database Migrations**
+   ```bash
+   npx prisma db push
+   ```
+
+6. **Generate Prisma Client**
+   ```bash
+   npx prisma generate
+   ```
+
+7. **Start the Application**
+   ```bash
+   npm run start:dev
+   ```
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/register` | Register with email/password | No |
+| POST | `/auth/login` | Login with email/password | No |
+| GET | `/auth/google` | Initiate Google OAuth | No |
+| GET | `/auth/google/callback` | Google OAuth callback | No |
+| GET | `/auth/profile` | Get current user profile | Yes |
+| POST | `/auth/logout` | Logout (clear cookies) | No |
+
+### Example Requests
+
+**Register**
+```bash
+curl -X POST http://localhost:3001/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
+```
+
+**Login**
+```bash
+curl -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
+```
+
+**Protected Route**
+```bash
+curl -X GET http://localhost:3001/auth/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+## Database Schema
+
+### User Model
+```prisma
+model User {
+  id              String   @id @default(uuid())
+  email           String?  @unique
+  password        String?
+  firstName       String?
+  lastName        String?
+  avatarUrl       String?
+  isEmailVerified Boolean  @default(false)
+  socialAccounts  SocialAccount[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+```
+
+### SocialAccount Model
+```prisma
+model SocialAccount {
+  id           String        @id @default(uuid())
+  userId       String
+  provider     OAuthProvider
+  providerId   String
+  email        String?
+  accessToken  String?
+  refreshToken String?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+```
+
+## Adding New OAuth Providers
+
+To add a new OAuth provider (e.g., Facebook, GitHub):
+
+1. **Update Prisma Schema**
+   ```prisma
+   enum OAuthProvider {
+     google
+     facebook  // Add new provider
+     github
+     jira
+   }
+   ```
+
+2. **Create Strategy**
+   ```typescript
+   // src/auth/strategies/facebook.strategy.ts
+   @Injectable()
+   export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
+     constructor(
+       private configService: ConfigService,
+       private authService: AuthService,
+     ) {
+       super({
+         clientID: configService.get<string>('FACEBOOK_CLIENT_ID'),
+         clientSecret: configService.get<string>('FACEBOOK_CLIENT_SECRET'),
+         callbackURL: configService.get<string>('FACEBOOK_CALLBACK_URL'),
+         scope: ['email'],
+       });
+     }
+
+     async validate(accessToken: string, refreshToken: string, profile: any) {
+       return this.authService.validateOAuthLogin(
+         OAuthProvider.facebook,
+         profile.id,
+         {
+           email: profile.emails?.[0]?.value,
+           firstName: profile.name?.givenName,
+           lastName: profile.name?.familyName,
+           avatarUrl: profile.photos?.[0]?.value,
+           accessToken,
+           refreshToken,
+         },
+       );
+     }
+   }
+   ```
+
+3. **Add Routes to Controller**
+   ```typescript
+   @Get('facebook')
+   @UseGuards(FacebookAuthGuard)
+   async facebookAuth() {}
+
+   @Get('facebook/callback')
+   @UseGuards(FacebookAuthGuard)
+   async facebookCallback(@Request() req, @Response() res) {
+     // Same logic as Google callback
+   }
+   ```
+
+4. **Register in Module**
+   ```typescript
+   providers: [
+     // ... existing providers
+     FacebookStrategy,
+   ],
+   ```
+
+## Security Features
+
+- **Password Hashing**: bcrypt with 12 salt rounds
+- **JWT Security**: Configurable expiration and secret
+- **HTTP-only Cookies**: Optional secure cookie implementation
+- **Input Validation**: class-validator for all DTOs
+- **SQL Injection Protection**: Prisma ORM with parameterized queries
+- **CORS Configuration**: Configurable for production
+
+## Production Considerations
+
+1. **Environment Variables**: Use strong, unique values for production
+2. **Database**: Use connection pooling and SSL
+3. **JWT Secret**: Use a cryptographically secure random string
+4. **HTTPS**: Always use HTTPS in production
+5. **Rate Limiting**: Implement rate limiting for auth endpoints
+6. **Email Verification**: Implement email verification for new registrations
+7. **Password Reset**: Add password reset functionality
+8. **Refresh Tokens**: Implement refresh token rotation
+
+## Development
 
 ```bash
-# unit tests
-$ npm run test
+# Install dependencies
+npm install
 
-# e2e tests
-$ npm run test:e2e
+# Run in development mode
+npm run start:dev
 
-# test coverage
-$ npm run test:cov
+# Run tests
+npm run test
+
+# Run e2e tests
+npm run test:e2e
+
+# Build for production
+npm run build
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the UNLICENSED License.
