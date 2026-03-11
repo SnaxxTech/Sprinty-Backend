@@ -3,7 +3,10 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { SocialAccountsService } from '../social-accounts/social-accounts.service';
+import { MailService } from '../mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { User, OAuthProvider } from '../../generated/prisma';
 import type { SocialAccountWithUser } from '../social-accounts/social-accounts.service';
 
@@ -28,6 +31,7 @@ export class AuthService {
     private socialAccountsService: SocialAccountsService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
@@ -172,5 +176,67 @@ export class AuthService {
     if (!authCookie) return null;
     
     return authCookie.split('=')[1];
+  }
+
+  /**
+   * Handle forgot password request
+   * Always returns success to prevent email enumeration attacks
+   */
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    const { email } = forgotPasswordDto;
+
+    try {
+      // Generate reset token (returns null if user doesn't exist)
+      const resetToken = await this.usersService.generatePasswordResetToken(email);
+      
+      if (resetToken) {
+        // Build reset link with raw token
+        const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+        const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+        
+        // Send reset email
+        await this.mailService.sendPasswordResetEmail(email, resetLink);
+      }
+
+      // Always return success message to prevent email enumeration
+      // Don't reveal whether the email exists or not
+      return {
+        message: 'If an account with that email exists, we have sent a password reset link.',
+      };
+    } catch (error) {
+      // Log error for monitoring but still return success message
+      console.error('Forgot password error:', error);
+      
+      return {
+        message: 'If an account with that email exists, we have sent a password reset link.',
+      };
+    }
+  }
+
+  /**
+   * Handle password reset with token
+   */
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    const { token, password } = resetPasswordDto;
+
+    try {
+      const success = await this.usersService.resetPassword(token, password);
+      
+      if (!success) {
+        throw new UnauthorizedException('Invalid or expired reset token');
+      }
+
+      return {
+        message: 'Password has been reset successfully. You can now login with your new password.',
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      
+      // Log unexpected errors
+      console.error('Reset password error:', error);
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
   }
 }

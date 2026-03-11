@@ -20,19 +20,21 @@ enum OAuthProvider {
 
 // User Model
 model User {
-  id              String   @id @default(uuid())
-  email           String?  @unique
-  password        String?
-  firstName       String?
-  lastName        String?
-  avatarUrl       String?
-  isEmailVerified Boolean  @default(false)
+  id                    String   @id @default(uuid())
+  email                 String?  @unique
+  password              String?
+  firstName             String?
+  lastName              String?
+  avatarUrl             String?
+  isEmailVerified       Boolean  @default(false)
+  resetPasswordToken    String?  @unique
+  resetPasswordExpires  DateTime?
   
   // Relations
-  socialAccounts  SocialAccount[]
+  socialAccounts        SocialAccount[]
   
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("users")
 }
